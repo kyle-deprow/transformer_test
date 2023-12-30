@@ -4,21 +4,13 @@ import json
 import torch, torch.cuda
 import os
 
-if torch.cuda.is_available():
-    cuda_device = torch.device("cuda")
-    device = cuda_device
-    print ("Device: cuda")
-else:
-    device = 'cpu'
-    print ("CUDA device not found, using CPU")
-
-def test_model(sample_size,seed,file):
-    model = Model(78)
-    model.load(file)
+def test_model(sample_size,seed,load_path):
+    model = Model(vocab_size, save_path='',device=device)
+    model.load(f'{PATH}/models/{load_path}')
     print(seed + model.sample(seed,sample_size))
    
 def train_model(config_path, corpus, save_path):
-    model = Model(78, f'{PATH}/models/{save_path}', device=device)
+    model = Model(vocab_size, f'{PATH}/models/{save_path}', device=device)
     model.load_text(f'{PATH}/data/{corpus}')
     config = json.loads(open(f'{PATH}/{config_path}', 'r').read())
 
@@ -30,7 +22,7 @@ def train_model(config_path, corpus, save_path):
                         config['patience'])
 
 def fine_tune(config_path,corpus,save_path,load_path):
-    model = Model(78, f'{PATH}/models/{save_path}', device=device)
+    model = Model(vocab_size, f'{PATH}/models/{save_path}', device=device)
 
     model.load(f'{PATH}/models/{load_path}')
     model.load_text(f'{PATH}/data/{corpus}')
@@ -56,14 +48,14 @@ def parse_arguments():
                         help='path to configuration file for fine tuning/training the model')
     parser.add_argument('corpus', nargs='?', type=str, default=f"{PATH}/data/sanderson.txt",
                         help='path to text corpus used to fine tune/train model')
-    parser.add_argument('save_path', nargs='?', type=str, default=f"{PATH}/models/model_01.json",
+    parser.add_argument('-to_path', nargs='?', type=str, default=f"{PATH}/models/model_01.json",
                         help='path to .json file where model will be stored')
 
     parser.add_argument('-sample_size',nargs='?', type=int, default=300,
                         help='number of characters/tokens to sample when generating test phrase')
     parser.add_argument('-seed',nargs='?', default="Shallan opened her book and began to read it, and then ",
                         help='used seed')
-    parser.add_argument('-load_path',nargs='?', default=f"{PATH}/models/model_01.json",
+    parser.add_argument('-from_path',nargs='?', default=f"{PATH}/models/model_01.json",
                         help='path to file with model parameters to be loaded')
 
     args = parser.parse_args()
@@ -83,10 +75,16 @@ else:
 
 args = parse_arguments()
 
+
 if args.train:
-    train_model(args.config, args.corpus, args.save_path)
+    vocab_size = len(set((open(f'{PATH}/data/{args.corpus}','r')).read()))
+    train_model(args.config, args.corpus, args.to_path)
 if args.fine_tune:
-    fine_tune(args.config, args.corpus, args.save_path, args.load_path)
+    vocab_size_to = len(set((open(f'{PATH}/data/{args.corpus}','r')).read()))
+    vocab_size_from = len(json.loads(open(f'{PATH}/models/{args.from_path}','r').read()).pop())
+    vocab_size = max(vocab_size_to,vocab_size_from)
+    fine_tune(args.config, args.corpus, args.to_path, args.from_path)
 if args.test:
-    test_model(args.sample_size, args.seed, args.load_path)
+    vocab_size = len(json.loads(open(f'{PATH}/models/{args.from_path}','r').read()).pop())
+    test_model(args.sample_size, args.seed, args.from_path)
 
