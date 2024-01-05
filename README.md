@@ -22,9 +22,10 @@
 ### Requirements
 - The required packages are listed on recquirements.txt. The numpy-based implementations of the layers are in the `numpy_implementations` folder in `layers.py` and `model.py`, and the torch implementation is on layers_torch.py and model_torch.py.
 - The torch version is a little faster, and is the one used on the run.py implementation. The numpy files are listed for educational purposes only.
-- To setup a miniconda virtual environment, run on terminal:
+- To setup and join a miniconda virtual environment, run on terminal:
 ```
 conda create -n environment_name python=3.8
+conda activate environment_name
 ```
 - The requirements can be installed on a virtual environment with the command
 ```
@@ -36,7 +37,10 @@ pip install -r requirements.txt
   
 ### Pretraining
 - To pretrain a RNN on language modeling (predicting next character), first go into `config.py` and chose the necessary arguments.
-- Under `hyperparameters`, you may want to alter (although the defaults work pretty well):
+- In the `training_params` dictionary, choose:
+  - `--corpus` (name of file in data directory with the text you want to train the model on) 
+  - `--to_path` (.json file that will be created to store the model) <b>[OPTIONAL]</b>
+- And you can choose the hyperparameters (although the defaults work pretty well):
   - `n_iter` (number of times the model will run a full sequence during training)
   - `n_timesteps` (number of characters the model will see/predict on each iteration in `n_iter`)
   - `batch_size` (number of parallel iterations the model will run)
@@ -44,11 +48,7 @@ pip install -r requirements.txt
   - `regularization`: (scalar regulating size of weights and overfitting) <b>[OPTIONAL]</b>
   - `patience` (after how many iterations  without improvement should the learning rate be reduced) <b>[OPTIONAL]</b>
   
-- Under `model_layers`, you can choose whatever configuration works best. Usually, layers with more parameters work better for larger text files.
-  
-- Under `training_parameters`, choose:
-  - `--corpus` (name of file in data directory with the text you want to train the model on) 
-  - `--to_path` (.json file that will be created to store the model) <b>[OPTIONAL]</b>
+- Under `model_layers`, you can choose whatever configuration works best. Usually, layers with more parameters require larger text files to avoid overfitting and repetitive outputs.
   
 - Finally, simply run on terminal:
 ```
@@ -60,20 +60,19 @@ python3 run.py --train --config=config.py
   
 ### Fine-tuning
 - To fine-tune a RNN on a given text file, go to `config.py` and choose the arguments:
-- Under `hyperparameters`, you may want to alter (although the defaults work well for pretraining):
-  - `n_iter` (number of times the model will run a full sequence during training)
-  - `n_timesteps` (number of characters the model will see/predict on each iteration in `n_iter`)
-  - `batch_size` (number of parallel iterations the model will run)
-  - `learning_rate` (scalar regulating how quickly model parameters change. <b>Should be smaller for fine-tuning</b>)
-  - `regularization`: (scalar regulating size of weights and overfitting) <b>[OPTIONAL]</b>
-  - `patience` (after how many iterations  without improvement should the learning rate be reduced) <b>[OPTIONAL]</b>
-  
-- `model_layers` will not be accessed during fine-tuning, as you will use the layers of the pretrained model.
-  
-- Under `training_parameters`, choose:
+- In the `fine_tuning_params` dictionary, choose:
   - `--corpus` (name of file in data directory with the text you want to train the model on) 
   - `--from_path` (.json file that contains pretrained model)
   - `--to_path` (.json file that will be created to store the model) <b>[OPTIONAL]</b>
+- And you can choose the hyperparameters (although the defaults work pretty well):
+  - `n_iter` (number of times the model will run a full sequence during training)
+  - `n_timesteps` (number of characters the model will see/predict on each iteration in `n_iter`)
+  - `batch_size` (number of parallel iterations the model will run)
+  - `learning_rate` (scalar regulating how quickly model parameters change)
+  - `regularization`: (scalar regulating size of weights and overfitting) <b>[OPTIONAL]</b>
+  - `patience` (after how many iterations  without improvement should the learning rate be reduced) <b>[OPTIONAL]</b>
+  
+- `model_layers` will not be accessed during fine-tuning, as the layers of the pretrained model will be automatically loaded.
   
 - Finally, simply run on terminal:
 ```
@@ -84,26 +83,50 @@ python3 run.py --fine_tune --config=config.py
 
 ### Testing
 - To test your RNN, go to `config.py` and choose the arguments:
-- `hyperparameters` will not be accessed during training, because the model is already trained.
-  
-- `model_layers` will not be accessed during fine-tuning, as you will use the layers of the pretrained model.
-  
-- Under `training_parameters`, choose:
+- In the `testing_params` dictionary, choose:
   - `--from_path` (.json file that contains pretrained model) 
   - `--sample_size` (how many characters will be generated, "sounding" like the source text) <b>[OPTIONAL]</b>
   - `--seed` (the start to the string your model generates, it has to "continue" it) <b>[OPTIONAL]</b>
+  
+- Note: the testing script does not access any hyperparametes, because the model is already trained.
+  
+- `model_layers` will not be accessed during testing, as you will use the layers of the pretrained model.
 
 - Finally, simply run on terminal:
 ```
-python3 run.py --config=config.py" 
+python3 run.py --test --config=config.py
 ```
 
-### Results
-- The Recurrent Neural Network implementation in main.py achieved a loss of <b>1.22</b> with a 78 vocabulary size and ~2M tokens of training for 100,000 timesteps (32 batch_size, 200 n_iterations).
-- The LSTM achieved a loss of <b>1.11</b> with the same settings.
-- Training times seemed to be a little faster with GPU, but the improvement was not dramatic (maybe due to iterative and non-paralellizeable nature of RNNs).
-- Total training times: RNN ~4h, LSTM ~10h on one GTX1070 Nvidia GPU.
-- Result with ~4h of pretraining on reduced version of COCA (around 10M tokens) and ~1h of fine-tuning on <i>tiny_shakespeare</i> dataset:
-  
+## 3. Results
+- The Recurrent Neural Network implementation in main.py achieved a loss of <b>1.22</b> with a 78 vocabulary size and ~1M tokens of training for 50,000 timesteps and ~2h.
+- It was trained on the <i>tiny shakespeare</i> text in `shakespeare.txt`. The results follow:  
+```
+CORIOLANUS:
+I am the guilty of us, friar is too tate.
+
+QUEEN ELIZABETH:
+You are! Marcius worsed with thy service, if nature all person, thy tear. My shame;
+I will be deaths well; I say
+Of day, who nay, embrace
+The common on him;
+To him life looks,
+Yet so made thy breast,
+From nightly:
+Stand good.
+
+BENVOLIO:
+Why, whom I come in his own share; so much for it;
+For that O, they say they shall, for son that studies soul
+Having done,
+And this is the rest in this in a fellow.
+```
 - Note: results achieved with the model configuration exactly as presented in this repo.
+
+- The LSTM implementation achieved a loss of <b>1.11</b> with the same settings.
+- Total training times: RNN ~2h, LSTM ~10h on one GTX1070 Nvidia GPU.
+- Result with ~4h of pretraining on reduced version of COCA (around 10M tokens) and ~1h of fine-tuning on <i>tiny_shakespeare</i> dataset:
+```
+INFERENCE - HERE
+```
+- Note: Training times seemed to be a little faster with GPU, but the improvement was not dramatic (maybe due to iterative and non-paralellizeable nature of RNNs).
 - Thanks for reading!
