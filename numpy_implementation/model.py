@@ -1,4 +1,4 @@
-﻿from layers import TemporalDense, LSTM, RNN, TemporalSoftmax, TemporalBatchNorm, DeepMemoryLSTM
+﻿from rnn.numpy_implementation.layers import TemporalDense, LSTM, RNN, TemporalSoftmax, TemporalBatchNorm, DeepMemoryLSTM
 import numpy as np
 from rnn.utils import build_logger
 import json
