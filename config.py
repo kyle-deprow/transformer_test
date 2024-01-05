@@ -14,45 +14,45 @@ def build_config(args: dict, device: str, PATH: str) -> dict:
     """
     
     training_params = {
-        '--corpus': f"{PATH}/data/sanderson.txt", 
-        '--to_path': f"{PATH}/models/my_pretrained_model.json", 
-        '--sample_size': 500,
-        '--seed': "",
+        '--corpus': f"{PATH}/data/shakespeare.txt", 
+        '--to_path': f"{PATH}/models/my_pretrained_lstm_model.json", 
         "n_iter": 150000,
-        "n_timesteps": 500,
-        "batch_size": 32,
-        "learning_rate": 0.001,
+        "n_timesteps": 512,
+        "batch_size": 16,
+        "learning_rate": 0.0006,
         "regularization": 0.001,
-        "patience": 7
+        "patience": 7,
+        "evaluation_interval": 250
 
     }
     fine_tuning_params = {
-        '--corpus': f"{PATH}/data/sanderson.txt", 
+        '--corpus': f"{PATH}/data/shakespeare.txt", 
         '--to_path': f"{PATH}/models/my_model.json", 
         '--from_path': f"{PATH}/models/my_pretrained_model.json",
         "n_iter": 20000,
-        "n_timesteps": 300,
-        "batch_size": 32,
+        "n_timesteps": 512,
+        "batch_size": 16,
         "learning_rate": 0.0001,
         "regularization": 0.001,
-        "patience": 7
+        "patience": 7,
+        "evaluation_interval": 250
 
     }
     testing_params = {
-        '--from_path': f"{PATH}/models/my_pretrained_model.json", 
-        '--sample_size': 750,
-        '--seed': ""
+        '--from_path': f"{PATH}/models/my_pretrained_lstm_model.json", 
+        'n_timesteps': 750,
+        '--seed': ". "
     }
 
     #gets the vocabulary size (num of unique characters) that the model will accept as input.
     vocab_size = _get_vocab_size(args,training_params['--corpus'],fine_tuning_params['--from_path'],testing_params['--from_path'])
     
     model_layers = [ 
-        TemporalDense(vocab_size, 512, device = device),
-        LSTM(512, 512, device = device),
-        TemporalDense(512, 512, device = device),
-        LSTM(512, 512, device = device),
-        TemporalDense(512, vocab_size, device = device),
+        Embedding(vocab_size, 256, device = device),
+        LSTM(256, 256, device = device),
+        TemporalDense(256, 256, device = device),
+        LSTM(256, 256, device = device),
+        TemporalDense(256, vocab_size, device = device),
         TemporalSoftmax(device = device)
     ]
     
